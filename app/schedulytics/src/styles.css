@@ -1,0 +1,186 @@
+* {
+  font-family: "Poppins", sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.fade-in {
+  transition: opacity 0.5s ease-out, transform 0.75s ease-out;
+  opacity: 0;
+}
+
+.fade-in.show {
+  opacity: 1;
+}
+
+/* Begin Home */
+
+.home {
+  width: 100%;
+  height: 100vh;
+}
+
+#BGVideo {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.content {
+  position: absolute;
+  display: flex;
+  align-items: left;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 5rem 3rem 0 3rem;
+  color: white;
+}
+
+.content h1 {
+  font-size: 5em;
+  font-weight: 200;
+  line-height: 1em;
+  text-transform: uppercase;
+}
+
+.content h2 {
+  font-size: 2em;
+  font-weight: 200;
+  line-height: 1em;
+  text-transform: uppercase;
+}
+
+.content p {
+  font-size: 1.1em;
+  font-weight: 200;
+  max-width: 700px;
+  padding: 20px 0;
+  color: #919191;
+}
+
+/* End Home */
+
+/* Begin Navbar */
+
+.navbar {
+  position: fixed;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1.2rem 3rem;
+  color: white;
+}
+
+.navbar .site-title {
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1em;
+  margin-right: 3rem;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.navbar ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: right;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 1rem;
+}
+
+.navbar a {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0.25rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.navbar li {
+  font-weight: 200;
+  position: relative;
+  z-index: 0;
+  display: flex;
+  padding: 0.3em 1em;
+  white-space: nowrap;
+  color: rgb(255, 255, 255);
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background: #111;
+}
+
+.navbar li:before {
+  position: absolute;
+  z-index: -1;
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  content: "";
+  transition: opacity 0.3s ease-in-out;
+  animation: glowingli 20s linear infinite;
+  opacity: 0;
+  border-radius: 10px;
+  background: linear-gradient(
+    52deg,
+    #fff,
+    #808080,
+    #3b3b3b,
+    #000,
+    #000,
+    #3b3b3b,
+    #808080,
+    #fff
+  );
+  background-size: 400%;
+  filter: blur(5px);
+}
+
+@keyframes glowingli {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 400% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+.navbar li:hover:before {
+  opacity: 1;
+}
+
+.navbar li:after {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: "";
+  border-radius: 10px;
+  background: #191919;
+}
+
+/* End Navbar */
