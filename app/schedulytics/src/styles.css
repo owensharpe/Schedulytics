@@ -6,7 +6,7 @@
 }
 
 .fade-in {
-  transition: opacity 0.5s ease-out, transform 0.75s ease-out;
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
   opacity: 0;
 }
 
@@ -184,3 +184,9 @@
 }
 
 /* End Navbar */
+
+/* TEST FOR 3D MODEL */
+
+canvas {
+  height: 100vh !important;
+}

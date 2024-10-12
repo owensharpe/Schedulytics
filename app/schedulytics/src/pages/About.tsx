@@ -1,27 +1,15 @@
-import { OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
-import { Suspense } from "react";
+import BostonView from "../components/BostonView";
+import { useFadeIn } from "../hooks/useFadeIn";
 
-function About() {
+const About: React.FC = () => {
+  const fadeIn = useFadeIn(100);
+
   return (
-    <div className="about">
-      <Canvas
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          zIndex: -1,
-        }}
-        camera={{ position: [0, 0, 5], fov: 70 }}
-      >
-        <Suspense fallback={null}>{/* <Model /> */}</Suspense>
-        <OrbitControls enableZoom={false} />
-      </Canvas>
-      <div className="content">
-        <h1>About</h1>
-      </div>
+    <div className={`home fade-in ${fadeIn ? "show" : ""}`}>
+      <div className="overlay" />
+      <BostonView />
     </div>
   );
-}
+};
 
 export default About;
