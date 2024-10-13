@@ -105,6 +105,19 @@
   gap: 1rem;
 }
 
+.navbar li {
+  font-weight: 200;
+  position: relative;
+  z-index: 0;
+  display: flex;
+  white-space: nowrap;
+  color: rgb(255, 255, 255);
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background: #111;
+}
+
 .navbar a {
   display: flex;
   align-items: center;
@@ -114,18 +127,11 @@
   color: inherit;
 }
 
-.navbar li {
-  font-weight: 200;
-  position: relative;
-  z-index: 0;
-  display: flex;
-  padding: 0.3em 1em;
-  white-space: nowrap;
-  color: rgb(255, 255, 255);
-  border: none;
-  border-radius: 10px;
-  outline: none;
-  background: #111;
+.navbar li a {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0.5em 1em;
 }
 
 .navbar li:before {
@@ -184,9 +190,3 @@
 }
 
 /* End Navbar */
-
-/* TEST FOR 3D MODEL */
-
-canvas {
-  height: 100vh !important;
-}

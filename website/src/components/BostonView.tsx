@@ -4,7 +4,7 @@ import { GLTFLoader } from "three-stdlib";
 
 const BostonView: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number>(); // Reference to store the requestAnimationFrame ID
+  const requestRef = useRef<number>();
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -53,13 +53,11 @@ const BostonView: React.FC = () => {
       }
     );
 
-    // Variables to store mouse position
     let mouseX = 0;
     let mouseY = 0;
     let targetX = 0;
     let targetY = 0;
 
-    // Update target rotation based on mouse movement
     const onMouseMove = (event: MouseEvent) => {
       mouseX = (event.clientX - window.innerWidth / 2) / 200;
       mouseY = (event.clientY - window.innerHeight / 2) / 200;
@@ -90,23 +88,19 @@ const BostonView: React.FC = () => {
 
     window.addEventListener("resize", handleResize);
 
-    // Cleanup function to stop the animation and remove event listeners
     return () => {
-      // Cancel the animation frame to stop the rendering loop
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
       }
 
-      // Remove event listeners
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("resize", handleResize);
 
-      // Clean up Three.js objects
       if (mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);
       }
 
-      renderer.dispose(); // Clean up renderer resources
+      renderer.dispose();
     };
   }, []);
 

@@ -1,12 +1,12 @@
 import { useFadeIn } from "../hooks/useFadeIn";
-// import bDrone from "/BostonDrone.mp4";
+import bDrone from "/BostonDrone.mp4";
 
 function Home() {
   const fadeIn = useFadeIn(100);
 
   return (
     <div className={`home fade-in ${fadeIn ? "show" : ""}`}>
-      {/* <video src={bDrone} autoPlay loop muted id="BGVideo" /> */}
+      <video src={bDrone} autoPlay loop muted id="BGVideo" />
       <div className="overlay" />
       <div className="content">
         <h1>Schedule Evaluation</h1>
