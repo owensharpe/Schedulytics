@@ -1,5 +1,6 @@
 import { Link, useMatch, useResolvedPath } from "react-router-dom";
 import { useFadeIn } from "../hooks/useFadeIn";
+import "./Navbar.css";
 
 function Navbar() {
   const fadeIn = useFadeIn(100);

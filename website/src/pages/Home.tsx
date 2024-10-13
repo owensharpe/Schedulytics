@@ -1,4 +1,5 @@
 import { useFadeIn } from "../hooks/useFadeIn";
+import "./Home.css";
 import bDrone from "/BostonDrone.mp4";
 
 function Home() {
