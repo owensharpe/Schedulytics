@@ -44,6 +44,7 @@ def access_trace_surveys(url):
         page.click('#idSIButton9[value="Yes"]')
 
         # get on the trace surveys link from student hub and open new tab
+        print("Into the Student Hub!")
         with page.expect_popup() as popup_info:
             page.click('a[href="https://www.applyweb.com/eval/shibboleth/neu/36892"]')
         trace_tab = popup_info.value
@@ -61,6 +62,7 @@ def access_trace_surveys(url):
         iframe.locator('button:has-text("Send Me a Push")').click()
 
         # get into the dropdown menu
+        print("Into the Trace Survey Browser!")
         time.sleep(5)
         trace_tab.wait_for_load_state('networkidle')
         trace_tab.click('li[class="dropdown"] > a[class="dropdown-toggle"]')
@@ -69,9 +71,46 @@ def access_trace_surveys(url):
         trace_tab.wait_for_timeout(2000)
         trace_tab.click('a[href="reportbrowser"]')
 
-        # get into the selection iframe
-        trace_tab.wait_for_selector('iframe#contentFrame')
-        content_frame = page.frame(name="contentFrame")
+        # get into the content selection iframe
+        trace_tab.wait_for_load_state('networkidle')
+        trace_tab.wait_for_selector('iframe#contentFrame', timeout=3000)
+        content_frame = trace_tab.frame(name='contentFrame')
+
+        # THINK ABOUT WHAT TERMS WE WANT (i.e. all the terms, excluding law semester terms, etc.)
+        # get term tab and use the 'all' term to view all the trace surveys
+        select_element = content_frame.locator('select[id="TermSelect"]')
+        options = select_element.locator('option')
+        all_surveys = options.element_handles()[0]
+        all_surveys.click()
+        print(f"Inside of the \'{all_surveys.get_attribute('label')}\' Term!\n")
+
+        # let surveys load
+        time.sleep(2)
+
+        # while we still have surveys to scrape
+        page_count = 1
+        while 1:
+            print(f'At Page #{page_count}')
+            content_frame.wait_for_load_state('networkidle')
+
+            # obtain rows
+            survey_table = content_frame.locator('table#resultTable')
+            rows = survey_table.locator('tbody tr')
+
+            # get the 'href' links from each row
+            temp_links = ['https://www.applyweb.com' + row.query_selector_all('a')[0].get_attribute('href') for
+                          row in rows.element_handles()]
+            print(temp_links)
+
+            # try to go to next page
+            next_button = content_frame.locator('ul.pagination').locator('li.pagination-next:not(.disabled) a').nth(0)
+            if next_button.count() > 0:
+                next_button.click()
+                page_count += 1
+                time.sleep(2)
+            else:
+                print("No more pages left to scrape.")
+                break
 
         time.sleep(10000)
         browser.close()
@@ -79,9 +118,17 @@ def access_trace_surveys(url):
     return 0
 
 
+def get_survey_content(url):
+    """
+    :param url: the url for the trace survey
+    :return: html content data
+    """
+    pass
+
+
 if __name__ == '__main__':
 
-    # call func
+    # call method
     access_trace_surveys('https://student.me.northeastern.edu/resources/')
 
 
