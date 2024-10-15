@@ -76,41 +76,65 @@ def access_trace_surveys(url):
         trace_tab.wait_for_selector('iframe#contentFrame', timeout=3000)
         content_frame = trace_tab.frame(name='contentFrame')
 
-        # THINK ABOUT WHAT TERMS WE WANT (i.e. all the terms, excluding law semester terms, etc.)
-        # get term tab and use the 'all' term to view all the trace surveys
+        # get all the trace surveys terms
         select_element = content_frame.locator('select[id="TermSelect"]')
         options = select_element.locator('option')
-        all_surveys = options.element_handles()[0]
-        all_surveys.click()
-        print(f"Inside of the \'{all_surveys.get_attribute('label')}\' Term!\n")
+        all_surveys = options.element_handles()
 
-        # let surveys load
-        time.sleep(2)
 
-        # while we still have surveys to scrape
-        page_count = 1
-        while 1:
-            print(f'At Page #{page_count}')
-            content_frame.wait_for_load_state('networkidle')
+        # we need to filter out the law terms
+        filtered_terms = []
+        for survey in all_surveys[1:]:
+            term_name = survey.evaluate('(node) => node.textContent')
+            if 'LAW' not in term_name and 'Law' not in term_name and 'MLS' not in term_name:
+                filtered_terms.append(survey)
+        print(f"Filtered Out Law Terms!\n")
 
-            # obtain rows
-            survey_table = content_frame.locator('table#resultTable')
-            rows = survey_table.locator('tbody tr')
+        # go term by term, and scrape each page of trace surveys
+        for term in filtered_terms:
+            print(f"On Term: {term.evaluate('(node) => node.textContent')}")
+            term.click()
+            
+            # let surveys load
+            time.sleep(3)
 
-            # get the 'href' links from each row
-            temp_links = ['https://www.applyweb.com' + row.query_selector_all('a')[0].get_attribute('href') for
-                          row in rows.element_handles()]
-            print(temp_links)
+            # force reset to first page by directly clicking page 1 in the pagination
+            try:
+                # locate the page 1 button in pagination and click it
+                first_page_button = content_frame.locator('ul.pagination li a:has-text("1")')
+                if first_page_button.count() > 0:
+                    first_page_button.click()
+                    print("Successfully clicked on the first page.")
+                    content_frame.wait_for_load_state('networkidle')
+                else:
+                    print("No page 1 button found, likely already on first page.")
+            except Exception as e:
+                print(f"Error resetting to first page: {e}")
 
-            # try to go to next page
-            next_button = content_frame.locator('ul.pagination').locator('li.pagination-next:not(.disabled) a').nth(0)
-            if next_button.count() > 0:
-                next_button.click()
-                page_count += 1
-                time.sleep(2)
-            else:
-                print("No more pages left to scrape.")
-                break
+            # while we still have surveys to scrape
+            page_count = 1
+            while 1:
+                print(f'At Page #{page_count}')
+                content_frame.wait_for_load_state('networkidle')
+
+                # obtain rows
+                survey_table = content_frame.locator('table#resultTable')
+                rows = survey_table.locator('tbody tr')
+
+                # get the 'href' links from each row
+                temp_links = ['https://www.applyweb.com' + row.query_selector_all('a')[0].get_attribute('href') for row
+                              in rows.element_handles()]
+                print(temp_links)
+
+                # try to go to next page
+                next_button = content_frame.locator('ul.pagination').locator('li.pagination-next:not(.disabled) a').nth(0)
+                if next_button.count() > 0:
+                    next_button.click()
+                    page_count += 1
+                    time.sleep(2)
+                else:
+                    print("No more pages left to scrape.\n")
+                    break
 
         time.sleep(10000)
         browser.close()
