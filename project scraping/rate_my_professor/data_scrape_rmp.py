@@ -134,38 +134,22 @@ def scrape_professor_reviews(universityobject, prof_id):
     # grab the reviews list from the specific professor using the API
     reviews = universityobject.create_reviews_list(prof_id)
 
-    # turn into a DataFrame object; check if we actually have reviews
-    if reviews:
-        temp_df = pd.DataFrame(reviews)
-
-        # take only certain columns we want and rename them as such
-        temp_df = temp_df[['attendance', 'clarityColor', 'easyColor', 'helpColor', 'onlineClass',
-                           'quality', 'rClarity', 'rClass', 'rComments', 'rDate', 'rEasy', 'rHelpful',
-                           'rOverall', 'rWouldTakeAgain', 'takenForCredit', 'teacherGrade',
-                           'teacherRatingTags']]
-        # temp_df.columns
-        temp_df.columns = ['Attendance', 'Clarity (color)', 'Easy (color)', 'Help (color)', 'Online Class',
-                           'Quality', 'Clarity (rating)', 'Class (rating)', 'Comments', 'Date', 'Easy Rating',
-                           'Helpful Rating', 'Overall Rating', 'Would Take Again?', 'Taken for Credit?',
-                           'Grade in Class', 'Teacher Rating Tags']
-    else:
-        temp_df = pd.DataFrame()
-
-    return temp_df
+    return reviews
 
 
 if __name__ == '__main__':
 
-    """
     # scrape professors from Northeastern
     NortheasternUniversity = RateMyProfApi('696')
     professor_data = NortheasternUniversity.get_professors()
     
     # get temporary professor data
     prof_df = pd.DataFrame(professor_data)
+    print("Grabbed Temporary Data!")
     
     # filter data we want to keep (for now)
     final_df = prof_df[['tFname', 'tMiddlename', 'tLname', 'tid', 'tDept', 'institution_name', 'tSid']]
+    print("Filtered the Data!")
 
     # change column names
     final_df.columns = ['First Name', 'Middle Name', 'Last Name', 'ID', 'Department',
@@ -173,19 +157,22 @@ if __name__ == '__main__':
 
     # Remove Leandra Smollin and Jack Witkin (They have no data)
     final_df = final_df[~final_df['ID'].isin([1047708, 2180974])]
+    print("Removed Unnecessary Teachers!")
     
     # get all the content we need
     final_df[['Number of Ratings', 'Average Rating (Out of 5)']] = final_df['ID'].apply(lambda x:
-     pd.Series(data_scrape.scrape_professor_avg_rating_and_num_ratings(x)))
+     pd.Series(scrape_professor_avg_rating_and_num_ratings(x)))
+    print("Scraped Number of Ratings and Average Rating!")
 
     final_df[['Would Take Again (Percent)', 'Level of Difficulty (Out of 5)']] = final_df['ID'].apply(lambda x:
-     pd.Series(data_scrape.scrape_professor_wta_percentage_and_lvl_of_difficulty(x)))
+     pd.Series(scrape_professor_wta_percentage_and_lvl_of_difficulty(x)))
+    print("Scraped Would Take Again Percentage and Level of Difficulty!")
     
-    final_df['Popular Tags'] = final_df['ID'].apply(lambda x: data_scrape.scrape_professor_tags(x))
+    final_df['Popular Tags'] = final_df['ID'].apply(lambda x: scrape_professor_tags(x))
+    print("Scraped Popular Tags")
  
-    final_df['Reviews'] = final_df['ID'].apply(lambda x:
-     data_scrape.scrape_professor_reviews(NortheasternUniversity, x))
+    final_df['Reviews'] = final_df['ID'].apply(lambda x: scrape_professor_reviews(NortheasternUniversity, x))
+    print("Scraped Reviews!")
      
     # export our scraped RateMyProfessor Data as a CSV File
-    final_df.to_csv('northeastern_rmp_data.csv')
-    """
+    final_df.to_csv('northeastern_rmp_data.csv', index=False)
