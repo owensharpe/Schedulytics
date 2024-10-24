@@ -2,14 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './ScheduleEvaluator.css';
 import Modal from 'react-modal';
 import { v4 as uuidv4 } from 'uuid';
-import Papa from 'papaparse'; // Import PapaParse for CSV parsing
-import Fuse from 'fuse.js'; // Import Fuse.js for fuzzy matching
-import { ToastContainer, toast } from 'react-toastify'; // Import React Toastify for notifications
-import 'react-toastify/dist/ReactToastify.css'; // Import React Toastify CSS
+import Papa from 'papaparse'; 
+import Fuse from 'fuse.js'; 
+import { ToastContainer, toast } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css'; 
 
 Modal.setAppElement('#root');
 
-// Define the structure of a Schedule Event
+
 interface ScheduleEvent {
   id: string;
   title: string;
@@ -21,7 +21,6 @@ interface ScheduleEvent {
   instructor?: string;
 }
 
-// Define the structure of Teacher Data from CSV
 interface TeacherData {
   'First Name': string;
   'Last Name': string;
@@ -30,7 +29,7 @@ interface TeacherData {
   'Popular Tags': string; // JSON stringified array
 }
 
-// Define the structure for processed Teacher Data
+
 interface ProcessedTeacherData {
   averageRating: number | null;
   levelOfDifficulty: number | null;
@@ -81,17 +80,13 @@ const ScheduleEvaluator: React.FC = () => {
         return [];
       }
     } catch (e) {
-      // Keep the console log for debugging purposes
       console.error(`Row ${rowIndex + 2}: Error parsing 'Popular Tags' for ${fullName}:`, e);
       
-      // Remove the line that sets csvError to prevent displaying the error on the page
-      // setCsvError(`Error parsing 'Popular Tags' for ${fullName}: ${e}`);
-      
-      // Return an empty array as a fallback
+   
       return [];
     }
   };
-  
+
 
   useEffect(() => {
     Papa.parse<TeacherData>('/neu_rmp.csv', {
@@ -107,22 +102,21 @@ const ScheduleEvaluator: React.FC = () => {
           const firstName = row['First Name']?.trim();
           const lastName = row['Last Name']?.trim();
 
-          // Construct full name and normalize
+    
           const fullName = [firstName, lastName].filter(Boolean).join(' ').trim().toLowerCase();
 
           if (!fullName) return;
 
-          // Parse average rating
+  
           const avgRatingStr = row['Average Rating (Out of 5)'];
           const avgRating = parseFloat(avgRatingStr);
           const averageRating = !isNaN(avgRating) && avgRating > 0 ? avgRating : null;
 
-          // Parse level of difficulty
           const levelDifficultyStr = row['Level of Difficulty (Out of 5)'];
           const levelDifficulty = parseFloat(levelDifficultyStr);
           const levelOfDifficulty = !isNaN(levelDifficulty) && levelDifficulty > 0 ? levelDifficulty : null;
 
-          // Parse popular tags
+ 
           const popularTagsStr = row['Popular Tags'];
           let keywords: string[] = [];
           if (popularTagsStr && popularTagsStr !== "[]") {
@@ -296,6 +290,33 @@ const ScheduleEvaluator: React.FC = () => {
     });
   }, [uniqueTeachers, teachersData, fuse]);
 
+  // New function to clear all events
+  const clearAllEvents = () => {
+    if (window.confirm('Are you sure you want to clear all events from your schedule? This action cannot be undone.')) {
+      setEvents([]);
+      toast.info('All events have been cleared.');
+    }
+  };
+
+  // New useMemo hooks to calculate average rating and difficulty
+  const averageRating = useMemo(() => {
+    const ratings = enrichedTeachers
+      .map(teacher => typeof teacher.averageRating === 'number' ? teacher.averageRating : null)
+      .filter((rating): rating is number => rating !== null);
+    if (ratings.length === 0) return 'N/A';
+    const sum = ratings.reduce((a, b) => a + b, 0);
+    return (sum / ratings.length).toFixed(1);
+  }, [enrichedTeachers]);
+
+  const averageDifficulty = useMemo(() => {
+    const difficulties = enrichedTeachers
+      .map(teacher => typeof teacher.levelOfDifficulty === 'number' ? teacher.levelOfDifficulty : null)
+      .filter((difficulty): difficulty is number => difficulty !== null);
+    if (difficulties.length === 0) return 'N/A';
+    const sum = difficulties.reduce((a, b) => a + b, 0);
+    return (sum / difficulties.length).toFixed(1);
+  }, [enrichedTeachers]);
+
   return (
     <div className="schedule-evaluator">
       <h2>Weekly Schedule Evaluator</h2>
@@ -304,9 +325,19 @@ const ScheduleEvaluator: React.FC = () => {
 
       {csvError && <p className="error">{csvError}</p>}
 
-      <button onClick={() => setImportModalIsOpen(true)} className="import-button">
-        Import Schedule
-      </button>
+      <div className="button-group">
+        <button onClick={() => setImportModalIsOpen(true)} className="import-button">
+          Import Schedule
+        </button>
+        <button
+          onClick={clearAllEvents}
+          className="clear-button"
+          disabled={events.length === 0}
+          aria-disabled={events.length === 0}
+        >
+          Clear Schedule
+        </button>
+      </div>
 
       <div className="schedule-grid">
         <div className="header-cell time-cell">Time</div>
@@ -357,6 +388,13 @@ const ScheduleEvaluator: React.FC = () => {
 
       <div className="teacher-section">
         <h3>Teachers</h3>
+
+        {/* New Averages Display */}
+        <div className="teacher-averages">
+          <p><strong>Average Rating:</strong> {averageRating !== 'N/A' ? averageRating : 'N/A'}</p>
+          <p><strong>Average Level of Difficulty:</strong> {averageDifficulty !== 'N/A' ? averageDifficulty : 'N/A'}</p>
+        </div>
+
         <div className="teacher-list">
           {enrichedTeachers.length > 0 ? (
             enrichedTeachers.map((teacher, index) => (
@@ -434,3 +472,4 @@ const ScheduleEvaluator: React.FC = () => {
 };
 
 export default ScheduleEvaluator;
+
