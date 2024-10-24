@@ -1,14 +1,14 @@
 /* ScheduleEvaluator.css */
 
-/* Container for the Schedule Evaluator */
+
 .schedule-evaluator {
-  padding: 6rem 3rem 3rem 3rem; /* Adjust padding to account for fixed navbar */
-  background-color: #121212; /* Dark background to match navbar */
+  padding: 6rem 3rem 3rem 3rem; 
+  background-color: #121212; 
   min-height: 100vh;
   color: #ffffff;
 }
 
-/* Heading Style */
+
 .schedule-evaluator h2 {
   margin-bottom: 2rem;
   font-size: 2rem;
@@ -16,10 +16,17 @@
   color: #ffffff;
 }
 
-/* Import Button Styles */
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem; 
+  margin: 1rem auto; 
+}
+
+
 .import-button {
-  margin: 1rem auto;
-  display: block;
   padding: 0.5rem 1rem;
   background-color: #4caf50;
   color: #ffffff;
@@ -34,18 +41,33 @@
   background-color: #45a049;
 }
 
-/* Schedule Grid */
+
+.clear-button {
+  padding: 0.5rem 1rem;
+  background-color: #f44336; 
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.clear-button:hover {
+  background-color: #e53935; 
+}
+
 .schedule-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr); /* 1 column for Time, 7 for Days */
+  grid-template-columns: repeat(8, 1fr); 
   border: 1px solid #333;
   border-radius: 10px;
   overflow: hidden;
   max-width: 1200px;
-  margin: 0 auto 3rem auto; /* Added bottom margin for spacing */
+  margin: 0 auto 3rem auto; 
 }
 
-/* Header Cells */
+
 .header-cell {
   background-color: #1e1e1e;
   padding: 0.75rem;
@@ -54,7 +76,7 @@
   border-right: 1px solid #333;
 }
 
-/* Time Cells */
+
 .time-cell {
   background-color: #1e1e1e;
   padding: 0.75rem;
@@ -64,7 +86,7 @@
   font-size: 0.9rem;
 }
 
-/* Day Cells (Slots) */
+
 .day-cell {
   background-color: #1e1e1e;
   padding: 0.5rem;
@@ -72,20 +94,20 @@
   border-right: 1px solid #333;
   position: relative;
   cursor: pointer;
-  height: 60px; /* Fixed height for uniformity */
+  height: 60px; 
 }
 
 .day-cell:hover {
   background-color: #2c2c2c;
 }
 
-/* Slot with Event */
+
 .day-cell.has-event {
   background-color: #ff5722;
   cursor: pointer;
 }
 
-/* Event Styling */
+
 .event {
   color: #ffffff;
   padding: 0.3rem;
@@ -99,9 +121,9 @@
   overflow: hidden;
 }
 
-/* Differentiate Event Types using Data Attributes */
+
 .event[data-type="Class"] {
-  background-color: #ff5722; /* Orange for Class */
+  background-color: #ff5722; 
 }
 
 .event[data-type="Class"]:hover {
@@ -109,14 +131,14 @@
 }
 
 .event[data-type="Custom Event"] {
-  background-color: #4caf50; /* Green for Custom Events */
+  background-color: #4caf50; 
 }
 
 .event[data-type="Custom Event"]:hover {
   background-color: #43a047;
 }
 
-/* Tooltip for Events */
+
 .event::after {
   content: attr(title);
   position: absolute;
@@ -137,7 +159,6 @@
   display: block;
 }
 
-/* Modal Styles */
 .modal {
   position: absolute;
   top: 50%;
@@ -149,7 +170,7 @@
   padding: 2rem;
   border-radius: 10px;
   width: 90%;
-  max-width: 500px; /* Increased max-width for better content fit */
+  max-width: 500px; 
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
   color: #ffffff;
 }
@@ -211,10 +232,10 @@
   background-color: #777777;
 }
 
-/* Teacher Section Styles */
+
 .teacher-section {
   max-width: 1200px;
-  margin: 0 auto 3rem auto; /* Center and add bottom margin */
+  margin: 0 auto 3rem auto; 
   padding: 1rem;
   background-color: #1e1e1e;
   border-radius: 10px;
@@ -236,14 +257,14 @@
 }
 
 .teacher-item {
-  background-color: #4caf50; /* Green background for teachers */
+  background-color: #4caf50; 
   color: #ffffff;
   padding: 0.75rem 1.5rem;
   border-radius: 5px;
   font-size: 1rem;
   cursor: default;
   transition: background-color 0.3s ease;
-  width: 200px; /* Fixed width for uniformity */
+  width: 200px; 
 }
 
 .teacher-item:hover {
@@ -255,14 +276,12 @@
   margin-bottom: 0.5rem;
 }
 
-/* Error Message Styles */
 .error {
   color: red;
   text-align: center;
   margin-bottom: 1rem;
 }
 
-/* Debug Section Styles */
 .debug-section {
   background-color: #2c2c2c;
   padding: 1rem;
@@ -277,10 +296,10 @@
 }
 
 .debug-section pre {
-  color: #00ff00; /* Green text for readability */
+  color: #00ff00; 
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .schedule-evaluator {
     padding: 6rem 1.5rem 3rem 1.5rem;
@@ -329,7 +348,7 @@
   }
 }
 
-/* Scrollbar Styling for Schedule Grid */
+
 .schedule-grid {
   overflow: auto;
 }
@@ -345,4 +364,20 @@
 .schedule-grid::-webkit-scrollbar-thumb {
   background-color: #555555;
   border-radius: 4px;
+}
+.teacher-averages {
+  background-color: #2c2c2c; 
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.teacher-averages p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.teacher-averages strong {
+  color: #ff5722; 
 }
