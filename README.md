@@ -1,50 +1,57 @@
-# React + TypeScript + Vite
+# f24-group14
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+This project contains a web application stored in the `website` directory. After cloning the repository, follow the steps below to install dependencies and download large files managed by Git LFS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Setup Instructions
 
-## Expanding the ESLint configuration
+### 1. Clone the Repository
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+First, clone the repository using Git:
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+git clone https://github.com/yourusername/your-repo.git
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### 2. Navigate to the Website Directory
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+After cloning, move into the `website` directory:
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+cd website
 ```
+
+### 3. Install Dependencies
+
+Use `npm` to install all necessary dependencies for the project:
+
+```bash
+npm install
+```
+
+### 4. Git LFS Setup (if required)
+
+If you haven't installed Git LFS on your machine yet, do so now (can be ran in VSCode):
+
+- **macOS**: `brew install git-lfs`
+- **Ubuntu/Debian**: `sudo apt-get install git-lfs`
+- **Windows**: `git lfs install`
+
+Then, run the following command to set up Git LFS:
+
+```bash
+git lfs install
+```
+
+### 5. Pull LFS-Tracked Files
+
+Run the following command to pull large files (such as `.mp4` files) tracked by Git LFS:
+
+```bash
+git lfs pull
+```
+
+### 6. Run the Application
+
+Once the dependencies and large files are set up, you can start the application as per your project's setup (e.g., using `npm run dev` or other relevant commands).
