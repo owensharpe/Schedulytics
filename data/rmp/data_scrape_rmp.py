@@ -2,7 +2,7 @@
 File: data_scrape_rmp.py
 Author: Owen Sharpe
 Date: 9/23/24
-Description: Scrapes necessary data from Rate My Professor
+Description: Scrapes necessary trace_data_stores from Rate My Professor
 """
 
 # import necessary libraries
@@ -143,11 +143,11 @@ if __name__ == '__main__':
     NortheasternUniversity = RateMyProfApi('696')
     professor_data = NortheasternUniversity.get_professors()
     
-    # get temporary professor data
+    # get temporary professor trace_data_stores
     prof_df = pd.DataFrame(professor_data)
     print("Grabbed Temporary Data!")
     
-    # filter data we want to keep (for now)
+    # filter trace_data_stores we want to keep (for now)
     final_df = prof_df[['tFname', 'tMiddlename', 'tLname', 'tid', 'tDept', 'institution_name', 'tSid']]
     print("Filtered the Data!")
 
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     final_df.columns = ['First Name', 'Middle Name', 'Last Name', 'ID', 'Department',
                         'Institution Name', 'Institution ID']
 
-    # Remove Leandra Smollin and Jack Witkin (They have no data)
+    # Remove Leandra Smollin and Jack Witkin (They have no trace_data_stores)
     final_df = final_df[~final_df['ID'].isin([1047708, 2180974])]
     print("Removed Unnecessary Teachers!")
     
