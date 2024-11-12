@@ -2,7 +2,7 @@
 File: data_scrape_trace.py
 Author: Owen Sharpe
 Date: 9/29/24
-Description: Scrapes necessary data from Northeastern's Trace Surveys
+Description: Scrapes necessary trace_data_stores from Northeastern's Trace Surveys
 """
 
 # import necessary libraries
@@ -23,8 +23,9 @@ def access_trace_surveys(url):
     with sync_playwright() as p:
 
         # go to the Northeastern page
-        browser = p.chromium.launch(headless=False, slow_mo=50)
-        page = browser.new_page()
+        browser = p.chromium.launch(headless=True, slow_mo=50)
+        context = browser.new_context()
+        page = context.new_page()
         page.goto(url)
 
         # fill in my username and password
@@ -45,8 +46,8 @@ def access_trace_surveys(url):
 
         # get on the trace surveys link from student hub and open new tab
         print("Into the Student Hub!")
-        page.wait_for_selector('a[data-testid="link-resources"]')
-        page.click('a[data-testid="link-resources"]')
+        page.wait_for_selector('a[href="/resources/"]')
+        page.click('a[href="/resources/"]')
         with page.expect_popup() as popup_info:
             page.click('a[href="https://www.applyweb.com/eval/shibboleth/neu/36892"]')
         trace_tab = popup_info.value
@@ -92,29 +93,66 @@ def access_trace_surveys(url):
         print(f"Filtered Out Law Terms!\n")
 
 
-        # go term by term, and scrape each page of trace surveys
+        # go term by term, and scrape each page of trace surveys (currently doing fourth section)
         data = []
-        for term in filtered_terms:
+        for term in filtered_terms[14:21]:
             print(f"On Term: {term.evaluate('(node) => node.textContent')}")
             term.click()
-            
-            # let surveys load
-            time.sleep(3)
 
-            # force reset to first page by directly clicking page 1 in the pagination
+            # let surveys load
+            time.sleep(2)
+
             try:
-                # locate the page 1 button in pagination and click it
-                first_page_button = content_frame.locator('ul.pagination li a:has-text("1")')
-                if first_page_button.count() > 0:
-                    first_page_button.click()
-                    print("Successfully clicked on the first page.")
-                    content_frame.wait_for_load_state('networkidle')
+                # find the '1' page element
+                page_1_locator = content_frame.locator(
+                    'div.col-sm-12.hidden-xs li.pagination-page a:text-is("1")').first
+
+                # check if '1' page exists
+                page_1_count = page_1_locator.count()
+
+                if page_1_count > 0:
+                    # check if '1' page is active
+                    parent_class = page_1_locator.locator('..').get_attribute("class")
+                    if "active" in parent_class:
+                        print("Page 1 is active, no further action needed.")
+                    else:
+                        print("Page 1 is visible but not active. Clicking to activate it.")
+                        page_1_locator.click()
+                        content_frame.wait_for_load_state('networkidle')
+                        time.sleep(1)
                 else:
-                    print("No page 1 button found, likely already on first page.")
+                    # if page '1' is not found, click 'Previous' until we get to the first page
+                    print("Going to click 'Previous' until we find the '1' tab.")
+                    while True:
+                        # Find the first "Previous" button within the 'hidden-xs' div
+                        previous_button_li = content_frame.locator('div.col-sm-12.hidden-xs li.pagination-prev').filter(
+                            has_text="Previous").first
+
+                        # check if 'Previous' is disabled
+                        if "disabled" in previous_button_li.get_attribute("class"):
+                            print("Reached the start, but couldn't find page '1'.")
+                            break
+
+                        # click the "Previous" button to go back a page
+                        previous_button_li.locator('a').click()
+                        content_frame.wait_for_load_state('networkidle')
+                        time.sleep(1)
+
+                        # after clicking "Previous", check if '1' page is now visible
+                        temp_pg1_locator = content_frame.locator(
+                            'div.col-sm-12.hidden-xs li.pagination-page a:text-is("1")').first
+
+                        # if we now see the '1' page
+                        if temp_pg1_locator.count() > 0:
+                            print("Page 1 is now visible. Clicking to activate it.")
+                            temp_pg1_locator.click()
+                            content_frame.wait_for_load_state('networkidle')
+                            break
             except Exception as e:
-                print(f"Error resetting to first page: {e}")
+                print(f"Error resetting pagination: {e}")
 
             # while we still have surveys to scrape
+            time.sleep(2)
             page_count = 1
             while 1:
                 print(f'At Page #{page_count}')
@@ -126,13 +164,11 @@ def access_trace_surveys(url):
 
                 # get the 'href' links from each row
                 temp_links = ['https://www.applyweb.com' + row.query_selector_all('a')[0].get_attribute('href') for row
-                              in rows.element_handles()]
+                                in rows.element_handles()]
 
-                # get the data in each link
+                # get the trace_data_stores in each link
                 for link in temp_links:
-                    data.append(get_survey_content(trace_tab, link))
-                    break
-                break
+                    data.append(get_survey_content(context, link))
 
                 # try to go to next page
                 next_button = content_frame.locator('ul.pagination').locator('li.pagination-next:not(.disabled) a').nth(0)
@@ -143,28 +179,26 @@ def access_trace_surveys(url):
                 else:
                     print("No more pages left to scrape.\n")
                     break
-            break
-        time.sleep(10000)
         browser.close()
+    return pd.DataFrame(data)
 
-    return 0
 
-
-def get_survey_content(playwright_move, url):
+def get_survey_content(chr_context, url):
     """
-    :param playwright_move: the playwright object to be able to open a new tab
+    :param chr_context: the playwright context object to be able to open a new tab
     :param url: the url for the trace survey
-    :return: html content data
+    :return: html content trace_data_stores
     """
 
-    # go to the given url
-    playwright_move.goto(url)
+    # open a new tab for the survey url and go to the url
+    new_tab = chr_context.new_page()
+    new_tab.goto(url)
 
     # wait for the iframe to load
-    playwright_move.wait_for_selector('iframe#contentFrame', timeout=3000)
+    new_tab.wait_for_selector('iframe#contentFrame', timeout=3000)
 
     # access iframe content by switching to the iframe context
-    content_frame = playwright_move.frame(name='contentFrame')
+    content_frame = new_tab.frame(name='contentFrame')
 
     # first get the course details
     course_details_selector = 'ul.list-unstyled'
@@ -188,54 +222,58 @@ def get_survey_content(playwright_move, url):
         'Course ID': course_details.get("Course ID", "N/A")
     }
 
+    # locate the parent div containing all charts
+    chart_container = content_frame.locator('#chart_55')
 
-    # inside the iframe, locate the data you need; the questions and the effectiveness chart
-    questions_selector = '#bar_mean_55_3 > div > div:nth-child(1) > div > svg > g:nth-child(4) > g:nth-child(4)'
-    ratings_selector = '#bar_mean_55_3 > div > div:nth-child(1) > div > svg > g:nth-child(4) > g:nth-child(5)'
+    # get all individual chart divs within this container
+    chart_divs = chart_container.locator('div[id^="chart_"]')
 
-    # wait for content
-    content_frame.wait_for_selector(questions_selector, timeout=5000)
-    content_frame.wait_for_selector(ratings_selector, timeout=5000)
+    # iterate over each chart div to extract questions and values
+    for i in range(chart_divs.count()):
+        chart_div = chart_divs.nth(i)
 
-    # extract the survey questions
-    questions_element = content_frame.locator(questions_selector)
-    question_groups = questions_element.locator('g')
+        questions_selector = '[id^="bar_mean_55_"] > div > div:nth-child(1) > div > svg > g:nth-child(4) > g:nth-child(4)'
+        ratings_selector = '[id^="bar_mean_55_"] > div > div:nth-child(1) > div > svg > g:nth-child(4) > g:nth-child(5)'
 
-    questions = []
-    for i in range(6, question_groups.count()):
-        question_g = question_groups.nth(i)
-        question_text_element = question_g.locator('text').first
-        question_text = question_text_element.text_content().strip()
-        if question_text:
-            questions.append(question_text)
+        # get the survey questions
+        questions_element = chart_div.locator(questions_selector)
+        question_groups = questions_element.locator('g')
+        questions = []
+        for i in range(6, question_groups.count()):
+            question_g = question_groups.nth(i)
+            question_text_element = question_g.locator('text').first
+            question_text = question_text_element.text_content().strip()
+            if question_text:
+                questions.append(question_text)
 
-    # extract the survey ratings
-    ratings_element = content_frame.locator(ratings_selector)
-    rating_groups = ratings_element.locator('g')
 
-    ratings = []
-    for i in range(8):
-        rating_g = rating_groups.nth(i)
-        rating_text_element = rating_g.locator('text').first
-        rating_text = rating_text_element.text_content().strip()
-        print(rating_text)
-        ratings.append(float(rating_text))
+        # get the survey ratings
+        ratings_element = chart_div.locator(ratings_selector)
+        rating_groups = ratings_element.locator('g')
+        ratings = []
+        for i in range(0, 6*len(questions), 3):
+            rating_g = rating_groups.nth(i)
+            rating_text_element = rating_g.locator('text').first
+            rating_text = rating_text_element.text_content().strip()
+            ratings.append(float(rating_text))
 
-    # match questions and ratings
-    for i, question in enumerate(questions):
-        rating = ratings[i]
-        row[question] = rating
+        # get professor and department means
+        professor_means = ratings[:len(questions)]
+        department_means = ratings[len(questions):]
 
-    print(row)
+        # match questions and ratings
+        for i, question in enumerate(questions):
+            rating_difference = round(professor_means[i] - department_means[i], 1)
+            row[question] = rating_difference
+
+    # exit out the tab
+    new_tab.close()
+
     return row
 
 
 if __name__ == '__main__':
 
     # call method
-    access_trace_surveys('https://student.me.northeastern.edu/resources/')
-
-
-
-
-
+    df = access_trace_surveys('https://student.me.northeastern.edu/resources/')
+    df.to_csv('trace_data_stores/Section 4 Trace Surveys.csv', index=False)
