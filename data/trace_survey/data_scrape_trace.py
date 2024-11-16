@@ -95,7 +95,7 @@ def access_trace_surveys(url):
 
         # go term by term, and scrape each page of trace surveys (currently doing fourth section)
         data = []
-        for term in filtered_terms[14:21]:
+        for term in filtered_terms[21:28]:
             print(f"On Term: {term.evaluate('(node) => node.textContent')}")
             term.click()
 
