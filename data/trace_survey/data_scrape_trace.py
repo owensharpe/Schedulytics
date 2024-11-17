@@ -93,9 +93,9 @@ def access_trace_surveys(url):
         print(f"Filtered Out Law Terms!\n")
 
 
-        # go term by term, and scrape each page of trace surveys (currently doing fourth section)
+        # go term by term, and scrape each page of trace surveys (currently doing fifth section)
         data = []
-        for term in filtered_terms[21:28]:
+        for term in filtered_terms[28:35]:
             print(f"On Term: {term.evaluate('(node) => node.textContent')}")
             term.click()
 
@@ -276,4 +276,4 @@ if __name__ == '__main__':
 
     # call method
     df = access_trace_surveys('https://student.me.northeastern.edu/resources/')
-    df.to_csv('trace_data_stores/Section 4 Trace Surveys.csv', index=False)
+    df.to_csv('trace_data_stores/Section 5 Trace Surveys.csv', index=False)
