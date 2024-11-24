@@ -1,205 +1,163 @@
-/* ProfessorDatabase.css */
+/* General reset */
+* {
+  border: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
+/* Main container for professor database */
 .professor-database {
-  padding: 6rem 3rem 3rem 3rem; 
-  background-color: #121212;
-  min-height: 100vh;
-  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100vh;
+}
+
+/* BostonView background */
+.professor-database .boston-view {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Overlay for dimming */
+.professor-database .overlay {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Dimming effect */
+}
+
+/* Centering content container */
+.professor-database-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-
-.professor-database h2 {
-  margin-bottom: 2rem;
-  font-size: 2rem;
-  text-align: center;
-  color: #ffffff;
-}
-
-
-.professor-database input[type="text"] {
+  justify-content: center; /* Center vertically */
   width: 100%;
-  max-width: 600px;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 5px;
-  background-color: #1e1e1e;
-  color: #ffffff;
-  margin-bottom: 2rem;
+  height: 100%; /* Fill the height of the viewport */
+  padding: 3rem;
   box-sizing: border-box;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
 }
 
-.professor-database input[type="text"]:focus {
-  outline: none;
-  background-color: #2c2c2c;
-  box-shadow: 0 0 5px #ff5722;
+/* Error message styling */
+.professor-database-error {
+  color: red;
+  margin-bottom: 16px;
 }
 
-
-.professor-database ul {
-  list-style-type: none;
-  padding: 0;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-
-.professor-database li {
-  background-color: #1e1e1e;
-  margin-bottom: 1rem;
-  padding: 1.5rem;
-  border: 1px solid #333333;
-  border-radius: 10px;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.professor-database li:hover {
-  background-color: #2c2c2c;
-  transform: translateY(-2px);
-}
-
-
-.professor-database li div {
+/* Scrollable container */
+.professor-box {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  overflow: hidden;
+  width: 600px;
+  height: 578px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  margin: 1rem 0;
+  padding: 1rem;
+  color: white;
 }
 
-
-.professor-database li strong {
-  font-size: 1.5rem;
-  color: #ff5722;
+.professor-box-content {
+  overflow-y: scroll;
+  scrollbar-width: none;
+  flex-grow: 1;
 }
 
-
-.professor-database li p {
-  margin: 0;
-  font-size: 1rem;
-  color: #dddddd;
-}
-
-
-.professor-database li p span {
-  background-color: #333333;
-  padding: 0.25rem 0.5rem;
-  border-radius: 5px;
-  margin-right: 0.5rem;
-  display: inline-block;
-  font-size: 0.9rem;
-}
-
-
-.professor-database .no-results {
-  margin-top: 2rem;
+/* .professor-box-content:empty::before {
+  content: "No results.\A\A Click the magnifying glass above to get started by searching for a professor.";
+  white-space: pre-wrap;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   text-align: center;
-  font-size: 1.2rem;
-  color: #ff5722;
-}
+} */
 
-
-.professor-database p {
+.professor-no-results {
+  display: flex; /* Enables flexbox for centering */
+  justify-content: center; /* Centers horizontally */
+  align-items: center; /* Centers vertically */
+  color: rgba(255, 255, 255, 0.7); /* Light text */
   text-align: center;
-  font-size: 1.1rem;
-  color: #bbbbbb;
+  padding: 3em;
+  height: 100%; /* Ensures it takes the full height of the container */
 }
 
-
-.professor-database ul li:nth-child(even) {
-  background-color: #2c2c2c;
+.professor-box-content::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Edge: Hides the scrollbar */
 }
 
-@media (max-width: 768px) {
-  .professor-database {
-    padding: 6rem 1.5rem 3rem 1.5rem;
+/* Fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-
-  .professor-database h2 {
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .professor-database input[type="text"] {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
-    max-width: 100%;
-  }
-
-  .professor-database li {
-    padding: 1rem;
-  }
-
-  .professor-database li strong {
-    font-size: 1.25rem;
-  }
-
-  .professor-database li p {
-    font-size: 0.9rem;
-  }
-
-  .professor-database .no-results,
-  .professor-database p {
-    font-size: 1rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-
-.professor-database ul {
-  overflow-y: auto;
-  max-height: 70vh;
+/* Individual professor block */
+.professor-block {
+  opacity: 0;
+  transform: translateY(10px); /* Slightly below its final position */
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  background-color: rgba(0, 0, 0, 0.25); /* Transparent black */
+  padding: 16px;
+  border-radius: 8px;
+  color: white; /* White text */
+  margin-bottom: 10px; /* Spacing between blocks */
+  margin-top: 10px;
 }
 
-.professor-database ul::-webkit-scrollbar {
-  width: 8px;
+/* Add a visible class when in view */
+.professor-block.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.professor-database ul::-webkit-scrollbar-track {
-  background: #1e1e1e;
-}
-
-.professor-database ul::-webkit-scrollbar-thumb {
-  background-color: #555555;
-  border-radius: 4px;
-}
-
-
-.professor-database li p span::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  background-color: #333333;
-  color: #ffffff;
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  top: -1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: 0.8rem;
-  display: none;
-  z-index: 1000;
-}
-
-.professor-database li p span:hover::after {
+/* Professor name styling */
+.professor-block strong {
   display: block;
+  margin: 0.25em 0;
+  /* margin-bottom: 0.5em; Spacing between name and details */
 }
 
-
-.professor-database .search-button {
-  padding: 0.5rem 1rem;
-  background-color: #4caf50;
-  color: #ffffff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-  margin-top: 1rem;
+/* Course title and score styling */
+.professor-block span {
+  display: block;
+  margin-bottom: 0.25em; /* Spacing between lines */
 }
 
-.professor-database .search-button:hover {
-  background-color: #45a049;
+/* Red border for low scores */
+.professor-block.red {
+  border: 4px solid rgba(255, 0, 0, 0.5); /* Transparent red */
+}
+
+/* Yellow border for moderate scores */
+.professor-block.yellow {
+  border: 4px solid rgba(255, 255, 0, 0.5); /* Transparent yellow */
+}
+
+/* Green border for high scores */
+.professor-block.green {
+  border: 4px solid rgba(0, 255, 0, 0.5); /* Transparent green */
 }

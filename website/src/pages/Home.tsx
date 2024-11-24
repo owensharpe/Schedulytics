@@ -9,7 +9,7 @@ function Home() {
     <div className={`home fade-in ${fadeIn ? "show" : ""}`}>
       <video src={bDrone} autoPlay loop muted id="BGVideo" />
       <div className="overlay" />
-      <div className="content">
+      <div className="home-content">
         <h1>Schedule Evaluation</h1>
         <h2>Made Easy</h2>
         <p>

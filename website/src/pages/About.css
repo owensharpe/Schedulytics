@@ -6,7 +6,7 @@
   height: 100vh;
 }
 
-.about .content {
+.about-content {
   position: absolute;
   z-index: 2;
   display: flex;
@@ -17,7 +17,7 @@
   padding: 3rem 3rem 0 3rem;
 }
 
-.about .box {
+.about-box {
   display: flex;
   overflow: hidden;
   flex-direction: column;
@@ -30,19 +30,19 @@
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-.about .box-title {
+.about-box-title {
   font-size: 1.5em;
   font-weight: 400;
   text-align: center;
 }
 
-.box-content p {
+.about-box-content p {
   margin-bottom: 1rem;
   margin-left: 1.5rem;
   margin-right: 1.5rem;
 }
 
-.box-content {
+.about-box-content {
   overflow-y: auto;
   flex-grow: 1;
   padding-right: 10px;

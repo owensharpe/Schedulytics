@@ -11,7 +11,7 @@
   z-index: -1;
 }
 
-.home .content {
+.home-content {
   position: absolute;
   display: flex;
   align-items: left;
@@ -23,17 +23,17 @@
   color: white;
 }
 
-.home .content h1 {
+.home-content h1 {
   font-size: 5em;
   line-height: 1em;
 }
 
-.home .content h2 {
+.home-content h2 {
   font-size: 2em;
   line-height: 1em;
 }
 
-.home .content p {
+.home-content p {
   font-size: 1.1em;
   max-width: 700px;
   padding: 20px 0;

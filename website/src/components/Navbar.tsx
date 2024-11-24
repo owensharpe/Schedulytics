@@ -11,10 +11,11 @@ function Navbar() {
         Schedulytics
       </Link>
       <ul>
-        <CustomLink to="/home">Home</CustomLink>
+        {/* <CustomLink to="/home">Home</CustomLink> */}
         <CustomLink to="/professor-database">Professor Database</CustomLink>
+        <CustomLink to="/course-database">Course Database</CustomLink>
         <CustomLink to="/schedule-evaluator">Schedule Evaluator</CustomLink>
-        <CustomLink to="/about">About</CustomLink>
+        {/* <CustomLink to="/about">About</CustomLink> */}
       </ul>
     </nav>
   );

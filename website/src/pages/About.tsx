@@ -11,10 +11,10 @@ const About: React.FC = () => {
       <div className="boston-view">
         <BostonView />
       </div>
-      <div className="content">
-        <div className="box">
-          <div className="box-content">
-            <h2 className="box-title">Box 1 Title</h2>
+      <div className="about-content">
+        <div className="about-box">
+          <div className="about-box-content">
+            <h2 className="about-box-title">Box 1 Title</h2>
             <p>
               Lorem ipsum odor amet, consectetuer adipiscing elit. Aliquet ac
               laoreet etiam libero auctor lacus quisque auctor consequat.
@@ -79,9 +79,9 @@ const About: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="box">
-          <div className="box-content">
-            <h2 className="box-title">Box 2 Title</h2>
+        <div className="about-box">
+          <div className="about-box-content">
+            <h2 className="about-box-title">Box 2 Title</h2>
             <p>
               Phasellus tristique magna velit erat; ligula odio gravida mi.
               Magnis fringilla dis maecenas egestas egestas. Congue potenti
