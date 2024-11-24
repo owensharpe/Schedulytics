@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import BostonView from "../components/BostonView"; // Import BostonView component
-import SearchBar from "../components/SearchBar"; // Import the new SearchBar
+import BostonView from "../components/BostonView";
+import SearchBar from "../components/SearchBar";
 import { useFadeIn } from "../hooks/useFadeIn";
 import { supabase } from "../supabase/SupabaseClient";
 import "./CourseDatabase.css";
@@ -15,15 +15,14 @@ const CourseDatabase: React.FC = () => {
   const [courseName, setCourseName] = useState<string>("");
   const [traceEvals, setTraceEvals] = useState<TraceEval[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const fadeIn = useFadeIn(50); // Trigger the fade-in effect
+  const fadeIn = useFadeIn(50);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("visible"); // Add the visible class for fade-in
+            entry.target.classList.add("visible");
           } else {
             entry.target.classList.remove("visible");
           }
@@ -38,8 +37,8 @@ const CourseDatabase: React.FC = () => {
     const blocks = document.querySelectorAll(".course-block");
     blocks.forEach((block) => observer.observe(block));
 
-    return () => observer.disconnect(); // Clean up the observer on component unmount
-  }, [traceEvals]); // Re-run when traceEvals changes
+    return () => observer.disconnect();
+  }, [traceEvals]);
 
   const fetchTraceEvals = async (course: string) => {
     try {
@@ -56,6 +55,14 @@ const CourseDatabase: React.FC = () => {
         );
         setTraceEvals(sortedResults);
         setError(null);
+
+        const courseBoxContent = document.querySelector(
+          ".course-box-content"
+        ) as HTMLElement;
+
+        if (courseBoxContent) {
+          courseBoxContent.scrollTop = 0;
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -65,6 +72,7 @@ const CourseDatabase: React.FC = () => {
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
+
     if (courseName.trim()) {
       fetchTraceEvals(courseName);
     }
@@ -77,15 +85,19 @@ const CourseDatabase: React.FC = () => {
   const getScoreClass = (score: number): string => {
     if (score < -5) return "red";
     if (score >= -5 && score < 5) return "yellow";
+
     return "green";
   };
 
   const groupedByCourse = traceEvals.reduce((acc, evalData) => {
     const courseTitle = evalData.course_title || "Unknown Course";
+
     if (!acc[courseTitle]) {
       acc[courseTitle] = [];
     }
+
     acc[courseTitle].push(evalData);
+
     return acc;
   }, {} as Record<string, TraceEval[]>);
 

@@ -15,7 +15,6 @@ const ProfessorDatabase: React.FC = () => {
   const [professorName, setProfessorName] = useState<string>("");
   const [traceEvals, setTraceEvals] = useState<TraceEval[]>([]);
   const [error, setError] = useState<string | null>(null);
-
   const fadeIn = useFadeIn(50);
 
   useEffect(() => {
@@ -59,8 +58,17 @@ const ProfessorDatabase: React.FC = () => {
           course_title: result.course_title,
           professor_score: result.professor_score,
         }));
+
         setTraceEvals(combinedResults);
         setError(null);
+
+        const professorBoxContent = document.querySelector(
+          ".professor-box-content"
+        ) as HTMLElement;
+
+        if (professorBoxContent) {
+          professorBoxContent.scrollTop = 0;
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -70,6 +78,7 @@ const ProfessorDatabase: React.FC = () => {
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
+
     if (professorName.trim()) {
       fetchTraceEvals(professorName);
     }
@@ -82,6 +91,7 @@ const ProfessorDatabase: React.FC = () => {
   const getScoreClass = (score: number): string => {
     if (score < -5) return "red";
     if (score >= -5 && score < 5) return "yellow";
+
     return "green";
   };
 
