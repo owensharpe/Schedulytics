@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three-stdlib";
+import "./BostonView.css"; // Import the CSS file
 
 const BostonView: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -8,13 +9,16 @@ const BostonView: React.FC = () => {
 
   useEffect(() => {
     const scene = new THREE.Scene();
+
+    // Keep camera FOV and position consistent
     const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
+      75, // Field of View (FOV)
+      2, // Set a fixed aspect ratio (1:1 for now)
       0.1,
       10000
     );
 
+    // Fixed camera position and rotation
     camera.position.set(-100, 500, -200);
     camera.rotation.x = Math.PI / 3;
     camera.rotation.y = Math.PI;
@@ -80,9 +84,9 @@ const BostonView: React.FC = () => {
 
     requestRef.current = requestAnimationFrame(animate);
 
+    // Disable aspect ratio resizing by skipping camera updates
     const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+      // Only update renderer size, not camera
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
 
@@ -104,7 +108,7 @@ const BostonView: React.FC = () => {
     };
   }, []);
 
-  return <div ref={mountRef} style={{ width: "100vw", height: "100vh" }} />;
+  return <div ref={mountRef} className="boston-view" />;
 };
 
 export default BostonView;
