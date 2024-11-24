@@ -3,7 +3,7 @@ import "./Home.css";
 import bDrone from "/BostonDrone.mp4";
 
 function Home() {
-  const fadeIn = useFadeIn(100);
+  const fadeIn = useFadeIn(50);
 
   return (
     <div className={`home fade-in ${fadeIn ? "show" : ""}`}>

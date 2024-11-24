@@ -1,138 +1,141 @@
-/* General reset */
 * {
-  border: 0;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+
+  border: 0;
 }
 
-/* Main Container for Course Database */
 .course-database {
   position: relative;
+  overflow: hidden;
   width: 100%;
   height: 100vh;
-  overflow: hidden;
 }
 
-/* Content Container */
 .course-database-content {
   position: relative;
   z-index: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  flex-direction: column;
   justify-content: center;
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   padding: 3rem;
   text-align: center;
-  box-sizing: border-box;
 }
 
 .course-database-error {
-  color: red;
   margin-bottom: 16px;
+
+  color: red;
 }
 
-/* Course Box */
 .course-box {
   display: flex;
+  overflow: hidden;
   flex-direction: column;
   width: 600px;
   height: 578px;
   margin: 1rem 0;
   padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 10px;
   color: white;
-  overflow: hidden;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .course-box-content {
-  flex-grow: 1;
   overflow-y: scroll;
+  flex-grow: 1;
   scrollbar-width: none;
 }
 
 .course-box-content::-webkit-scrollbar {
-  display: none; /* Hide scrollbar for Chrome, Safari, and Edge */
+  display: none;
 }
 
 .course-no-results {
   display: flex;
-  justify-content: center;
-  text-align: center;
   align-items: center;
+  justify-content: center;
   height: 100%;
   padding: 3em;
+  text-align: center;
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Course Block */
 .course-block {
-  opacity: 0;
-  margin-bottom: 10px;
   margin-top: 10px;
+  margin-bottom: 10px;
   padding: 16px;
-  background-color: rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
-  color: white;
-  transform: translateY(10px);
   transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  transform: translateY(10px);
+
+  opacity: 0;
+  color: white;
   border: 4px solid rgba(200, 200, 200, 0.5); /* Light gray outline */
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.25);
 }
 
 .course-block.visible {
-  opacity: 1;
   transform: translateY(0);
+
+  opacity: 1;
 }
 
 .course-block span {
   display: block;
-  margin-bottom: 0.25em; /* Spacing between lines */
+  margin-bottom: 0.25em;
 }
 
 .course-block ul {
-  list-style: none;
   padding: 0;
+
+  list-style: none;
 }
 
 .course-block ul li {
-  display: flex; /* Aligns items horizontally */
+  font-size: 1rem;
+
+  display: flex;
   justify-content: center;
-  gap: 8px; /* Space between name and score */
   margin: 4px 0;
-  font-size: 1rem; /* Ensure consistent font size */
+  gap: 8px;
 }
 
 .course-block ul li span {
-  display: inline-block; /* Ensures proper alignment with text */
-  font-size: inherit; /* Matches the professor name's font size */
-  line-height: inherit; /* Matches the professor name's line height */
-  vertical-align: middle; /* Ensures score aligns with the text */
+  font-size: inherit;
+  line-height: inherit;
+
+  display: inline-block;
+  vertical-align: middle;
 }
 
-/* Score Color Classes */
-.red {
-  color: red;
+.professor-score.red {
+  color: rgba(255, 0, 0, 0.75);
 }
 
-.yellow {
-  color: #ffd700; /* Gold for moderate scores */
+.professor-score.yellow {
+  color: rgba(255, 255, 0, 0.75);
 }
 
-.green {
-  color: green;
+.professor-score.green {
+  color: rgba(0, 255, 0, 0.75);
 }
 
 /* Animations */
 @keyframes fadeInUp {
   from {
-    opacity: 0;
     transform: translateY(20px);
+
+    opacity: 0;
   }
   to {
-    opacity: 1;
     transform: translateY(0);
+
+    opacity: 1;
   }
 }

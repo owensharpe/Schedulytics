@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three-stdlib";
-import "./BostonView.css"; // Import the CSS file
+import { preloadModel } from "../utils/PreloadModel";
+import "./BostonView.css";
 
 const BostonView: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -10,15 +10,8 @@ const BostonView: React.FC = () => {
   useEffect(() => {
     const scene = new THREE.Scene();
 
-    // Keep camera FOV and position consistent
-    const camera = new THREE.PerspectiveCamera(
-      75, // Field of View (FOV)
-      2, // Set a fixed aspect ratio (1:1 for now)
-      0.1,
-      10000
-    );
+    const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 10000);
 
-    // Fixed camera position and rotation
     camera.position.set(-100, 500, -200);
     camera.rotation.x = Math.PI / 3;
     camera.rotation.y = Math.PI;
@@ -37,25 +30,18 @@ const BostonView: React.FC = () => {
     directionalLight.position.set(0, 100, -200).normalize();
     scene.add(directionalLight);
 
-    const loader = new GLTFLoader();
-    let object: THREE.Object3D;
+    let object: THREE.Object3D | null = null;
 
-    loader.load(
-      "/boston.gltf",
-      (gltf) => {
-        object = gltf.scene;
+    // Use the preloader to load or retrieve the model
+    preloadModel("/boston.gltf")
+      .then((loadedObject) => {
+        object = loadedObject;
         scene.add(object);
-        console.log("Model loaded successfully");
-      },
-      (xhr) => {
-        console.log(
-          `Model ${Math.round((xhr.loaded / xhr.total) * 100)}% loaded`
-        );
-      },
-      (error) => {
-        console.error("An error occurred while loading the model:", error);
-      }
-    );
+        console.log("Model loaded successfully from cache or network");
+      })
+      .catch((error) => {
+        console.error("Failed to load model:", error);
+      });
 
     let mouseX = 0;
     let mouseY = 0;

@@ -1,8 +1,7 @@
-// src/components/ProfessorDatabase.tsx
-
-import { ChangeEvent, Component, FormEvent } from "react";
-import BostonView from "../components/BostonView"; // Adjust the import path if necessary
-import SearchBar from "../components/SearchBar"; // Import the new SearchBar component
+import { useEffect, useState } from "react";
+import BostonView from "../components/BostonView";
+import SearchBar from "../components/SearchBar";
+import { useFadeIn } from "../hooks/useFadeIn";
 import { supabase } from "../supabase/SupabaseClient";
 import "./ProfessorDatabase.css";
 
@@ -12,24 +11,15 @@ interface TraceEval {
   professor_score: number;
 }
 
-interface ProfessorDatabaseState {
-  professorName: string;
-  traceEvals: TraceEval[];
-  error: string | null;
-}
+const ProfessorDatabase: React.FC = () => {
+  const [professorName, setProfessorName] = useState<string>("");
+  const [traceEvals, setTraceEvals] = useState<TraceEval[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-class ProfessorDatabase extends Component<{}, ProfessorDatabaseState> {
-  observer: IntersectionObserver;
+  const fadeIn = useFadeIn(50);
 
-  constructor(props: {}) {
-    super(props);
-    this.state = {
-      professorName: "",
-      traceEvals: [],
-      error: null,
-    };
-
-    this.observer = new IntersectionObserver(
+  useEffect(() => {
+    const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
@@ -40,13 +30,18 @@ class ProfessorDatabase extends Component<{}, ProfessorDatabaseState> {
         });
       },
       {
-        rootMargin: "20px 0px 20px 0px", // Adjust to trigger fade-in slightly earlier
-        threshold: 0, // Trigger as soon as any part is visible
+        rootMargin: "20px 0px 20px 0px",
+        threshold: 0,
       }
     );
-  }
 
-  fetchTraceEvals = async (name: string) => {
+    const blocks = document.querySelectorAll(".professor-block");
+    blocks.forEach((block) => observer.observe(block));
+
+    return () => observer.disconnect();
+  }, [traceEvals]);
+
+  const fetchTraceEvals = async (name: string) => {
     try {
       const { data, error } = await supabase.rpc(
         "combine_scores_by_professor",
@@ -56,119 +51,87 @@ class ProfessorDatabase extends Component<{}, ProfessorDatabaseState> {
       );
 
       if (error) {
-        this.setState({ error: error.message, traceEvals: [] });
+        setError(error.message);
+        setTraceEvals([]);
       } else {
         const combinedResults = (data || []).map((result: any) => ({
           instructor: result.instructor,
           course_title: result.course_title,
           professor_score: result.professor_score,
         }));
-
-        // Add fadeIn state to trigger fade-in effect for new results
-        this.setState({ traceEvals: [], error: null }, () => {
-          setTimeout(() => {
-            this.setState({ traceEvals: combinedResults }, () => {
-              this.observeBlocks();
-
-              // Reset the scroll position to the top
-              const professorBoxContent = document.querySelector(
-                ".professor-box-content"
-              ) as HTMLElement;
-              if (professorBoxContent) {
-                professorBoxContent.scrollTop = 0;
-              }
-            });
-          }, 100); // Short delay to allow DOM reset
-        });
+        setTraceEvals(combinedResults);
+        setError(null);
       }
     } catch (err: any) {
-      this.setState({ error: err.message, traceEvals: [] });
+      setError(err.message);
+      setTraceEvals([]);
     }
   };
 
-  handleSearch = (event: FormEvent) => {
+  const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
-    const { professorName } = this.state;
     if (professorName.trim()) {
-      this.fetchTraceEvals(professorName);
+      fetchTraceEvals(professorName);
     }
   };
 
-  handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ professorName: event.target.value });
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setProfessorName(event.target.value);
   };
 
-  observeBlocks() {
-    const blocks = document.querySelectorAll(".professor-block");
-    blocks.forEach((block) => {
-      if (block.classList.contains("visible")) {
-        return;
-      }
-      this.observer.observe(block);
-    });
-  }
-
-  componentDidMount() {
-    this.observeBlocks();
-  }
-
-  getScoreClass(score: number): string {
+  const getScoreClass = (score: number): string => {
     if (score < -5) return "red";
     if (score >= -5 && score < 5) return "yellow";
     return "green";
-  }
+  };
 
-  render() {
-    const { professorName, traceEvals, error } = this.state;
+  return (
+    <div className={`professor-database fade-in ${fadeIn ? "show" : ""}`}>
+      <div className="overlay" />
+      <div className="boston-view">
+        <BostonView />
+      </div>
+      <div className="professor-database-content">
+        <SearchBar
+          value={professorName}
+          onInputChange={handleInputChange}
+          onSearch={handleSearch}
+        />
 
-    return (
-      <div className="professor-database">
-        <div className="overlay" />
-        <div className="boston-view">
-          <BostonView />
-        </div>
-        <div className="professor-database-content">
-          <SearchBar
-            value={professorName}
-            onInputChange={this.handleInputChange}
-            onSearch={this.handleSearch}
-          />
+        {error && <p className="professor-database-error">{error}</p>}
 
-          {error && <p className="professor-database-error">{error}</p>}
-
-          <div className="professor-box">
-            <div className="professor-box-content">
-              {traceEvals.length === 0 && (
-                <div className="professor-no-results">
-                  No results.
-                  <br />
-                  <br />
-                  Click the magnifying glass above to get started by searching
-                  for a professor.
-                </div>
-              )}
-              {traceEvals.map((evalData, index) => (
-                <div
-                  key={index}
-                  className={`professor-block ${this.getScoreClass(
-                    evalData.professor_score
-                  )}`}
-                >
-                  <span>
-                    <em>{evalData.instructor}</em>
-                  </span>
-                  <span>{evalData.course_title}</span>
-                  <span>
-                    <em>{evalData.professor_score.toFixed(1)}</em>
-                  </span>
-                </div>
-              ))}
-            </div>
+        <div className="professor-box">
+          <div className="professor-box-content">
+            {traceEvals.length === 0 && (
+              <div className="professor-no-results">
+                No results.
+                <br />
+                <br />
+                Click the magnifying glass above to get started by searching for
+                a professor.
+              </div>
+            )}
+            {traceEvals.map((evalData, index) => (
+              <div
+                key={index}
+                className={`professor-block ${getScoreClass(
+                  evalData.professor_score
+                )}`}
+              >
+                <span>
+                  <em>{evalData.instructor}</em>
+                </span>
+                <span>{evalData.course_title}</span>
+                <span>
+                  <em>{evalData.professor_score.toFixed(1)}</em>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default ProfessorDatabase;
