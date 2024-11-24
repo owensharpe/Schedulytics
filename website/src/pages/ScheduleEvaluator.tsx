@@ -2,61 +2,53 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './ScheduleEvaluator.css';
 import Modal from 'react-modal';
 import { v4 as uuidv4 } from 'uuid';
-import Papa from 'papaparse'; 
 import Fuse from 'fuse.js'; 
 import { ToastContainer, toast } from 'react-toastify'; 
 import 'react-toastify/dist/ReactToastify.css'; 
+import { createClient } from '@supabase/supabase-js';
 
 Modal.setAppElement('#root');
 
-
 interface ScheduleEvent {
   id: string;
-  title: string;
+  title: string; // Instructor's name
   day: string;
   startTime: string;
   endTime: string;
   type: string;
-  location?: string;
-  instructor?: string;
 }
 
-interface TeacherData {
-  'First Name': string;
-  'Last Name': string;
-  'Average Rating (Out of 5)': string;
-  'Level of Difficulty (Out of 5)': string;
-  'Popular Tags': string; // JSON stringified array
+interface CourseData {
+  course_id: string;
+  course_title: string;
+  instructor: string;
+  professor_score: number | null;
 }
 
-
-interface ProcessedTeacherData {
-  averageRating: number | null;
-  levelOfDifficulty: number | null;
-  keywords: string[];
+interface ProcessedInstructorData {
+  id: string;
+  fullName: string;
+  professorScore: number | null;
 }
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => i);
 
+const supabaseUrl = 'https://rjjutfjplchrhxtzylay.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqanV0ZmpwbGNocmh4dHp5bGF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk0NDIxMDUsImV4cCI6MjA0NTAxODEwNX0.xNPBkKIITWtXDvBLMShaUu65hIZGa5dL2rQPxzLTRNA';
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 const ScheduleEvaluator: React.FC = () => {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [newEventTitle, setNewEventTitle] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; hour: number } | null>(null);
 
-  const [importModalIsOpen, setImportModalIsOpen] = useState(false);
-  const [importText, setImportText] = useState('');
+  const [instructorsData, setInstructorsData] = useState<ProcessedInstructorData[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [instructorFuse, setInstructorFuse] = useState<Fuse<ProcessedInstructorData>>();
 
-  const [teachersData, setTeachersData] = useState<{ [name: string]: ProcessedTeacherData }>({});
-  const [csvError, setCsvError] = useState<string | null>(null);
-
-  const fuse = useMemo(() => {
-    return new Fuse(Object.keys(teachersData), {
-      includeScore: true,
-      threshold: 0.4,
-    });
-  }, [teachersData]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     const savedEvents = localStorage.getItem('scheduleEvents');
@@ -69,78 +61,48 @@ const ScheduleEvaluator: React.FC = () => {
     localStorage.setItem('scheduleEvents', JSON.stringify(events));
   }, [events]);
 
-  const parsePopularTags = (tagsStr: string, rowIndex: number, fullName: string): string[] => {
-    try {
-      const fixedTagsStr = tagsStr.replace(/'\s*'/g, "', '").replace(/'/g, '"');
-      const popularTags: string[] = JSON.parse(fixedTagsStr);
-      if (Array.isArray(popularTags)) {
-        return popularTags;
-      } else {
-        console.warn(`Row ${rowIndex + 2}: 'Popular Tags' is not an array for ${fullName}.`);
-        return [];
-      }
-    } catch (e) {
-      console.error(`Row ${rowIndex + 2}: Error parsing 'Popular Tags' for ${fullName}:`, e);
-      
-   
-      return [];
-    }
-  };
-
-
   useEffect(() => {
-    Papa.parse<TeacherData>('/neu_rmp.csv', {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const data = results.data;
-        console.log('CSV Parsing Complete. Data:', data);
-        const teacherMap: { [name: string]: ProcessedTeacherData } = {};
+    // Fetch instructor data from Supabase
+    const fetchInstructors = async () => {
+      const { data, error } = await supabase
+        .from<CourseData>('trace_evals') // Replace 'courses' with your actual table name
+        .select('course_id, course_title, instructor, professor_score');
 
-        data.forEach((row, index) => {
-          const firstName = row['First Name']?.trim();
-          const lastName = row['Last Name']?.trim();
+      if (error) {
+        setFetchError(`Error fetching data from Supabase: ${error.message}`);
+      } else if (data) {
+        // Process data to get unique instructors
+        const instructorsMap = new Map<string, ProcessedInstructorData>();
 
-    
-          const fullName = [firstName, lastName].filter(Boolean).join(' ').trim().toLowerCase();
-
-          if (!fullName) return;
-
-  
-          const avgRatingStr = row['Average Rating (Out of 5)'];
-          const avgRating = parseFloat(avgRatingStr);
-          const averageRating = !isNaN(avgRating) && avgRating > 0 ? avgRating : null;
-
-          const levelDifficultyStr = row['Level of Difficulty (Out of 5)'];
-          const levelDifficulty = parseFloat(levelDifficultyStr);
-          const levelOfDifficulty = !isNaN(levelDifficulty) && levelDifficulty > 0 ? levelDifficulty : null;
-
- 
-          const popularTagsStr = row['Popular Tags'];
-          let keywords: string[] = [];
-          if (popularTagsStr && popularTagsStr !== "[]") {
-            keywords = parsePopularTags(popularTagsStr, index, fullName);
+        data.forEach((course) => {
+          const fullName = course.instructor.trim();
+          if (!instructorsMap.has(fullName)) {
+            instructorsMap.set(fullName, {
+              id: course.course_id,
+              fullName,
+              professorScore: course.professor_score,
+            });
           }
-
-          teacherMap[fullName] = {
-            averageRating,
-            levelOfDifficulty,
-            keywords: keywords.length > 0 ? keywords : ['N/A'],
-          };
         });
 
-        setTeachersData(teacherMap);
-      },
-      error: (error) => {
-        setCsvError(`Error parsing CSV: ${error.message}`);
-      },
-    });
+        const instructorsList = Array.from(instructorsMap.values());
+        setInstructorsData(instructorsList);
+
+        // Initialize Fuse for instructor search
+        const fuse = new Fuse(instructorsList, {
+          keys: ['fullName'],
+          threshold: 0.3,
+        });
+        setInstructorFuse(fuse);
+      }
+    };
+
+    fetchInstructors();
   }, []);
 
   const handleSlotClick = (day: string, hour: number) => {
     setSelectedSlot({ day, hour });
-    setNewEventTitle('');
+    setSearchQuery('');
     setModalIsOpen(true);
   };
 
@@ -151,146 +113,11 @@ const ScheduleEvaluator: React.FC = () => {
     }
   };
 
-  const handleModalSubmit = () => {
-    if (selectedSlot && newEventTitle.trim() !== '') {
-      const newEvent: ScheduleEvent = {
-        id: uuidv4(),
-        title: `${newEventTitle.trim()}`,
-        day: selectedSlot.day,
-        startTime: `${(selectedSlot.hour % 12) || 12}:00 ${selectedSlot.hour >= 12 ? 'PM' : 'AM'}`,
-        endTime: `${((selectedSlot.hour + 1) % 12) || 12}:00 ${selectedSlot.hour + 1 >= 12 ? 'PM' : 'AM'}`,
-        type: 'Custom Event',
-      };
-      setEvents([...events, newEvent]);
-      toast.success('Event added successfully!');
-    } else {
-      toast.warn('Please enter a valid event title.');
-    }
-    setModalIsOpen(false);
-    setSelectedSlot(null);
-  };
-
   const handleModalClose = () => {
     setModalIsOpen(false);
     setSelectedSlot(null);
   };
 
-  const parseScheduleText = (text: string): ScheduleEvent[] => {
-    const parsedEvents: ScheduleEvent[] = [];
-    const normalizedText = text.replace(/\r\n/g, '\n');
-    const lines = normalizedText.split('\n');
-
-    let currentCourseTitle = '';
-    let currentDays: string[] = [];
-    let currentClassEvents: ScheduleEvent[] = [];
-
-    const courseTitleRegex = /^(.*?)\s*\|/;
-    const daysLineRegex = /^(\d{2}\/\d{2}\/\d{4})\s*--\s*(\d{2}\/\d{2}\/\d{4})\s*(.*)$/;
-    const eventRegex = /^\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*-\s*(\d{1,2}:\d{2}\s*[APM]{2})\s*Type:\s*(Class|Final Exam)\s*Location:\s*(.*?)\s*Building:\s*(.*?)\s*Room:\s*(.*?)/;
-    const instructorRegex = /^Instructor:\s*(.*)$/;
-
-    lines.forEach((line) => {
-      const trimmedLine = line.trim();
-
-      if (trimmedLine === '') {
-        return;
-      }
-
-      const courseMatch = trimmedLine.match(courseTitleRegex);
-      if (courseMatch) {
-        currentCourseTitle = courseMatch[1].trim();
-        currentDays = [];
-        currentClassEvents = [];
-        return;
-      }
-
-      const daysMatch = trimmedLine.match(daysLineRegex);
-      if (daysMatch) {
-        const daysStr = daysMatch[3];
-        currentDays = daysStr.split(',').map(day => day.trim());
-        return;
-      }
-
-      const eventMatch = trimmedLine.match(eventRegex);
-      if (eventMatch) {
-        const [_, startTime, endTime, type, location, building, room] = eventMatch;
-        let fullLocation = location.toLowerCase() !== 'none' ? `Location: ${location}, Building: ${building}, Room: ${room}` : 'Location Not Specified';
-
-        currentDays.forEach(day => {
-          const formattedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
-          const event: ScheduleEvent = {
-            id: uuidv4(),
-            title: `${currentCourseTitle} (${type})`,
-            day: formattedDay,
-            startTime,
-            endTime,
-            type,
-            location: fullLocation !== 'Location Not Specified' ? fullLocation : undefined,
-            instructor: undefined,
-          };
-          parsedEvents.push(event);
-          currentClassEvents.push(event);
-        });
-
-        return;
-      }
-
-      // Updated instructor name handling
-      const instructorMatch = trimmedLine.match(instructorRegex);
-      if (instructorMatch && currentClassEvents.length > 0) {
-        let instructorName = instructorMatch[1].trim();
-        instructorName = instructorName.split('(')[0].trim();
-
-        // Handle "Last, First" format
-        if (instructorName.includes(',')) {
-          const [lastName, firstName] = instructorName.split(',').map(s => s.trim());
-          instructorName = `${firstName} ${lastName}`;
-        }
-
-        // Remove middle names or initials
-        const nameParts = instructorName.split(' ').filter(Boolean);
-        if (nameParts.length >= 2) {
-          instructorName = `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
-        } else {
-          instructorName = nameParts[0];
-        }
-
-        // Normalize the instructor name
-        instructorName = instructorName.toLowerCase();
-
-        currentClassEvents.forEach(event => {
-          event.instructor = instructorName;
-        });
-        return;
-      }
-    });
-
-    return parsedEvents;
-  };
-
-  const uniqueTeachers = useMemo(() => {
-    const teachers = events
-      .map(event => event.instructor)
-      .filter((instructor): instructor is string => Boolean(instructor))
-      .map(instructor => instructor.trim().toLowerCase());
-    return Array.from(new Set(teachers));
-  }, [events]);
-
-  const enrichedTeachers = useMemo(() => {
-    return uniqueTeachers.map(teacherName => {
-      const match = fuse.search(teacherName);
-      const matchedTeacher = match.length > 0 ? match[0].item : null;
-      const teacherInfo = matchedTeacher ? teachersData[matchedTeacher] : undefined;
-      return {
-        name: teacherName.split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
-        averageRating: teacherInfo && teacherInfo.averageRating !== null ? teacherInfo.averageRating : 'N/A',
-        levelOfDifficulty: teacherInfo && teacherInfo.levelOfDifficulty !== null ? teacherInfo.levelOfDifficulty : 'N/A',
-        keywords: teacherInfo && teacherInfo.keywords.length > 0 ? teacherInfo.keywords : ['N/A'],
-      };
-    });
-  }, [uniqueTeachers, teachersData, fuse]);
-
-  // New function to clear all events
   const clearAllEvents = () => {
     if (window.confirm('Are you sure you want to clear all events from your schedule? This action cannot be undone.')) {
       setEvents([]);
@@ -298,24 +125,52 @@ const ScheduleEvaluator: React.FC = () => {
     }
   };
 
-  // New useMemo hooks to calculate average rating and difficulty
-  const averageRating = useMemo(() => {
-    const ratings = enrichedTeachers
-      .map(teacher => typeof teacher.averageRating === 'number' ? teacher.averageRating : null)
-      .filter((rating): rating is number => rating !== null);
-    if (ratings.length === 0) return 'N/A';
-    const sum = ratings.reduce((a, b) => a + b, 0);
-    return (sum / ratings.length).toFixed(1);
-  }, [enrichedTeachers]);
+  const filteredInstructors = useMemo(() => {
+    if (!searchQuery || !instructorFuse) return [];
+    const results = instructorFuse.search(searchQuery, { limit: 3 }); // Limit to top 3 results
+    return results.map(result => result.item);
+  }, [searchQuery, instructorFuse]);
 
-  const averageDifficulty = useMemo(() => {
-    const difficulties = enrichedTeachers
-      .map(teacher => typeof teacher.levelOfDifficulty === 'number' ? teacher.levelOfDifficulty : null)
-      .filter((difficulty): difficulty is number => difficulty !== null);
-    if (difficulties.length === 0) return 'N/A';
-    const sum = difficulties.reduce((a, b) => a + b, 0);
-    return (sum / difficulties.length).toFixed(1);
-  }, [enrichedTeachers]);
+  const handleInstructorSelect = (selectedInstructor: ProcessedInstructorData) => {
+    if (selectedSlot) {
+      const newEvent: ScheduleEvent = {
+        id: uuidv4(),
+        title: selectedInstructor.fullName,
+        day: selectedSlot.day,
+        startTime: `${(selectedSlot.hour % 12) || 12}:00 ${selectedSlot.hour >= 12 ? 'PM' : 'AM'}`,
+        endTime: `${((selectedSlot.hour + 1) % 12) || 12}:00 ${selectedSlot.hour + 1 >= 12 ? 'PM' : 'AM'}`,
+        type: 'Instructor',
+      };
+      setEvents([...events, newEvent]);
+      toast.success('Instructor added to schedule!');
+      setModalIsOpen(false);
+      setSelectedSlot(null);
+      setSearchQuery('');
+    }
+  };
+
+  const uniqueInstructors = useMemo(() => {
+    const instructorNames = events
+      .map(event => event.title)
+      .filter((name): name is string => Boolean(name))
+      .map(name => name.trim());
+
+    const uniqueNames = Array.from(new Set(instructorNames));
+
+    return uniqueNames.map(name => {
+      const instructor = instructorsData.find(i => i.fullName === name);
+      return instructor || { id: '', fullName: name, professorScore: null };
+    });
+  }, [events, instructorsData]);
+
+  const averageProfessorScore = useMemo(() => {
+    const scores = uniqueInstructors
+      .map(instructor => typeof instructor.professorScore === 'number' ? instructor.professorScore : null)
+      .filter((score): score is number => score !== null);
+    if (scores.length === 0) return 'N/A';
+    const sum = scores.reduce((a, b) => a + b, 0);
+    return (sum / scores.length).toFixed(1);
+  }, [uniqueInstructors]);
 
   return (
     <div className="schedule-evaluator">
@@ -323,12 +178,9 @@ const ScheduleEvaluator: React.FC = () => {
 
       <ToastContainer />
 
-      {csvError && <p className="error">{csvError}</p>}
+      {fetchError && <p className="error">{fetchError}</p>}
 
       <div className="button-group">
-        <button onClick={() => setImportModalIsOpen(true)} className="import-button">
-          Import Schedule
-        </button>
         <button
           onClick={clearAllEvents}
           className="clear-button"
@@ -387,26 +239,23 @@ const ScheduleEvaluator: React.FC = () => {
       </div>
 
       <div className="teacher-section">
-        <h3>Teachers</h3>
+        <h3>Instructors</h3>
 
-        {/* New Averages Display */}
+        {/* New Average Professor Score Display */}
         <div className="teacher-averages">
-          <p><strong>Average Rating:</strong> {averageRating !== 'N/A' ? averageRating : 'N/A'}</p>
-          <p><strong>Average Level of Difficulty:</strong> {averageDifficulty !== 'N/A' ? averageDifficulty : 'N/A'}</p>
+          <p><strong>Average Professor Score:</strong> {averageProfessorScore !== 'N/A' ? averageProfessorScore : 'N/A'}</p>
         </div>
 
         <div className="teacher-list">
-          {enrichedTeachers.length > 0 ? (
-            enrichedTeachers.map((teacher, index) => (
+          {uniqueInstructors.length > 0 ? (
+            uniqueInstructors.map((instructor, index) => (
               <div key={index} className="teacher-item">
-                <strong>{teacher.name}</strong><br />
-                Average Rating: {teacher.averageRating !== 'N/A' ? teacher.averageRating : 'N/A'}<br />
-                Level of Difficulty: {teacher.levelOfDifficulty !== 'N/A' ? teacher.levelOfDifficulty : 'N/A'}<br />
-                Keywords: {teacher.keywords.join(', ')}
+                <strong>{instructor.fullName}</strong><br />
+                Professor Score: {instructor.professorScore !== null ? instructor.professorScore : 'N/A'}
               </div>
             ))
           ) : (
-            <p>No teachers available.</p>
+            <p>No instructors available.</p>
           )}
         </div>
       </div>
@@ -414,57 +263,30 @@ const ScheduleEvaluator: React.FC = () => {
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleModalClose}
-        contentLabel="Add Event"
+        contentLabel="Add Instructor"
         className="modal"
         overlayClassName="overlay"
       >
-        <h2>Add Class</h2>
+        <h2>Add Instructor</h2>
         {selectedSlot && (
           <p>{selectedSlot.day} at {selectedSlot.hour}:00</p>
         )}
         <input
           type="text"
-          value={newEventTitle}
-          onChange={e => setNewEventTitle(e.target.value)}
-          placeholder="Event Title"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search for an instructor"
         />
+        <ul className="class-list">
+          {filteredInstructors.map(instructor => (
+            <li key={instructor.id} onClick={() => handleInstructorSelect(instructor)}>
+              <strong>{instructor.fullName}</strong>
+            </li>
+          ))}
+          {filteredInstructors.length === 0 && searchQuery && <li>No instructors found.</li>}
+        </ul>
         <div className="modal-buttons">
-          <button onClick={handleModalSubmit}>Add Class</button>
           <button onClick={handleModalClose} className="cancel">Cancel</button>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={importModalIsOpen}
-        onRequestClose={() => setImportModalIsOpen(false)}
-        contentLabel="Import Schedule"
-        className="modal"
-        overlayClassName="overlay"
-      >
-        <h2>Import Schedule</h2>
-        <textarea
-          value={importText}
-          onChange={e => setImportText(e.target.value)}
-          placeholder="Paste your schedule text here"
-          rows={15}
-        />
-        <div className="modal-buttons">
-          <button onClick={() => {
-            const importedEvents = parseScheduleText(importText);
-            if (importedEvents.length > 0) {
-              setEvents([...events, ...importedEvents]);
-              toast.success('Schedule imported successfully!');
-            } else {
-              toast.warn('No events were imported. Please check your schedule text.');
-            }
-            setImportText('');
-            setImportModalIsOpen(false);
-          }}>
-            Import
-          </button>
-          <button onClick={() => { setImportModalIsOpen(false); setImportText(''); }} className="cancel">
-            Cancel
-          </button>
         </div>
       </Modal>
     </div>
@@ -472,4 +294,3 @@ const ScheduleEvaluator: React.FC = () => {
 };
 
 export default ScheduleEvaluator;
-
