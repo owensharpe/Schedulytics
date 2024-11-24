@@ -11,7 +11,8 @@ Modal.setAppElement('#root');
 
 interface ScheduleEvent {
   id: string;
-  title: string; // Instructor's name
+  courseTitle: string;
+  instructor: string;
   day: string;
   startTime: string;
   endTime: string;
@@ -25,15 +26,17 @@ interface CourseData {
   professor_score: number | null;
 }
 
-interface ProcessedInstructorData {
+interface ProcessedCourseData {
   id: string;
-  fullName: string;
+  courseTitle: string;
+  instructor: string;
   professorScore: number | null;
 }
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => i);
 
+// Initialize Supabase client using the anonymous key
 const supabaseUrl = 'https://rjjutfjplchrhxtzylay.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqanV0ZmpwbGNocmh4dHp5bGF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk0NDIxMDUsImV4cCI6MjA0NTAxODEwNX0.xNPBkKIITWtXDvBLMShaUu65hIZGa5dL2rQPxzLTRNA';
 
@@ -44,9 +47,9 @@ const ScheduleEvaluator: React.FC = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; hour: number } | null>(null);
 
-  const [instructorsData, setInstructorsData] = useState<ProcessedInstructorData[]>([]);
+  const [coursesData, setCoursesData] = useState<ProcessedCourseData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [instructorFuse, setInstructorFuse] = useState<Fuse<ProcessedInstructorData>>();
+  const [courseFuse, setCourseFuse] = useState<Fuse<ProcessedCourseData>>();
 
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -62,8 +65,8 @@ const ScheduleEvaluator: React.FC = () => {
   }, [events]);
 
   useEffect(() => {
-    // Fetch instructor data from Supabase
-    const fetchInstructors = async () => {
+    // Fetch course data from Supabase
+    const fetchCourses = async () => {
       const { data, error } = await supabase
         .from<CourseData>('trace_evals') // Replace 'courses' with your actual table name
         .select('course_id, course_title, instructor, professor_score');
@@ -71,33 +74,26 @@ const ScheduleEvaluator: React.FC = () => {
       if (error) {
         setFetchError(`Error fetching data from Supabase: ${error.message}`);
       } else if (data) {
-        // Process data to get unique instructors
-        const instructorsMap = new Map<string, ProcessedInstructorData>();
+        // Process data
+        const processedCourses: ProcessedCourseData[] = data.map((course) => ({
+          id: course.course_id,
+          courseTitle: course.course_title.trim(),
+          instructor: course.instructor.trim(),
+          professorScore: course.professor_score,
+        }));
 
-        data.forEach((course) => {
-          const fullName = course.instructor.trim();
-          if (!instructorsMap.has(fullName)) {
-            instructorsMap.set(fullName, {
-              id: course.course_id,
-              fullName,
-              professorScore: course.professor_score,
-            });
-          }
-        });
+        setCoursesData(processedCourses);
 
-        const instructorsList = Array.from(instructorsMap.values());
-        setInstructorsData(instructorsList);
-
-        // Initialize Fuse for instructor search
-        const fuse = new Fuse(instructorsList, {
-          keys: ['fullName'],
+        // Initialize Fuse for search
+        const fuse = new Fuse(processedCourses, {
+          keys: ['courseTitle', 'instructor'],
           threshold: 0.3,
         });
-        setInstructorFuse(fuse);
+        setCourseFuse(fuse);
       }
     };
 
-    fetchInstructors();
+    fetchCourses();
   }, []);
 
   const handleSlotClick = (day: string, hour: number) => {
@@ -125,24 +121,25 @@ const ScheduleEvaluator: React.FC = () => {
     }
   };
 
-  const filteredInstructors = useMemo(() => {
-    if (!searchQuery || !instructorFuse) return [];
-    const results = instructorFuse.search(searchQuery, { limit: 3 }); // Limit to top 3 results
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery || !courseFuse) return [];
+    const results = courseFuse.search(searchQuery, { limit: 3 }); // Limit to top 3 results
     return results.map(result => result.item);
-  }, [searchQuery, instructorFuse]);
+  }, [searchQuery, courseFuse]);
 
-  const handleInstructorSelect = (selectedInstructor: ProcessedInstructorData) => {
+  const handleCourseSelect = (selectedCourse: ProcessedCourseData) => {
     if (selectedSlot) {
       const newEvent: ScheduleEvent = {
         id: uuidv4(),
-        title: selectedInstructor.fullName,
+        courseTitle: selectedCourse.courseTitle,
+        instructor: selectedCourse.instructor,
         day: selectedSlot.day,
         startTime: `${(selectedSlot.hour % 12) || 12}:00 ${selectedSlot.hour >= 12 ? 'PM' : 'AM'}`,
         endTime: `${((selectedSlot.hour + 1) % 12) || 12}:00 ${selectedSlot.hour + 1 >= 12 ? 'PM' : 'AM'}`,
-        type: 'Instructor',
+        type: 'Course',
       };
       setEvents([...events, newEvent]);
-      toast.success('Instructor added to schedule!');
+      toast.success('Course added to schedule!');
       setModalIsOpen(false);
       setSelectedSlot(null);
       setSearchQuery('');
@@ -151,17 +148,26 @@ const ScheduleEvaluator: React.FC = () => {
 
   const uniqueInstructors = useMemo(() => {
     const instructorNames = events
-      .map(event => event.title)
+      .map(event => event.instructor)
       .filter((name): name is string => Boolean(name))
       .map(name => name.trim());
 
     const uniqueNames = Array.from(new Set(instructorNames));
 
     return uniqueNames.map(name => {
-      const instructor = instructorsData.find(i => i.fullName === name);
-      return instructor || { id: '', fullName: name, professorScore: null };
+      const instructorCourses = coursesData.filter(c => c.instructor === name);
+      const professorScores = instructorCourses
+        .map(c => c.professorScore)
+        .filter((score): score is number => score !== null);
+
+      const averageScore =
+        professorScores.length > 0
+          ? parseFloat((professorScores.reduce((a, b) => a + b, 0) / professorScores.length).toFixed(1))
+          : null;
+
+      return { fullName: name, professorScore: averageScore };
     });
-  }, [events, instructorsData]);
+  }, [events, coursesData]);
 
   const averageProfessorScore = useMemo(() => {
     const scores = uniqueInstructors
@@ -226,9 +232,9 @@ const ScheduleEvaluator: React.FC = () => {
                         e.stopPropagation();
                         handleEventClick(event.id);
                       }}
-                      title={`${event.title}\n${event.startTime} - ${event.endTime}`}
+                      title={`${event.courseTitle}\n${event.instructor}\n${event.startTime} - ${event.endTime}`}
                     >
-                      {event.title} ({event.startTime} - {event.endTime})
+                      {event.courseTitle} - {event.instructor} ({event.startTime} - {event.endTime})
                     </div>
                   )}
                 </div>
@@ -263,11 +269,11 @@ const ScheduleEvaluator: React.FC = () => {
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleModalClose}
-        contentLabel="Add Instructor"
+        contentLabel="Add Course or Instructor"
         className="modal"
         overlayClassName="overlay"
       >
-        <h2>Add Instructor</h2>
+        <h2>Add Course or Instructor</h2>
         {selectedSlot && (
           <p>{selectedSlot.day} at {selectedSlot.hour}:00</p>
         )}
@@ -275,15 +281,15 @@ const ScheduleEvaluator: React.FC = () => {
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Search for an instructor"
+          placeholder="Search for a course or instructor"
         />
         <ul className="class-list">
-          {filteredInstructors.map(instructor => (
-            <li key={instructor.id} onClick={() => handleInstructorSelect(instructor)}>
-              <strong>{instructor.fullName}</strong>
+          {filteredCourses.map(course => (
+            <li key={course.id} onClick={() => handleCourseSelect(course)}>
+              <strong>{course.courseTitle}</strong> - {course.instructor}
             </li>
           ))}
-          {filteredInstructors.length === 0 && searchQuery && <li>No instructors found.</li>}
+          {filteredCourses.length === 0 && searchQuery && <li>No courses or instructors found.</li>}
         </ul>
         <div className="modal-buttons">
           <button onClick={handleModalClose} className="cancel">Cancel</button>
