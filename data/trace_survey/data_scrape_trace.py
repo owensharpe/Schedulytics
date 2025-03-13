@@ -28,12 +28,12 @@ def access_trace_surveys(url):
         page = context.new_page()
         page.goto(url)
 
-        # fill in my username and password
+        # fill in my username and password (username and password hidden)
         page.wait_for_selector('#i0116')
-        page.fill('#i0116', 'sharpe.o@northeastern.edu')
+        page.fill('#i0116', '')
         page.click('#idSIButton9')
         page.wait_for_selector('#i0118')
-        page.fill('#i0118', 'TracyMcgrady21!')
+        page.fill('#i0118', '')
         page.click('#idSIButton9')
 
         # do two-factor authentication and then click okay button
